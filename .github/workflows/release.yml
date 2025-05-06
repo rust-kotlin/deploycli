@@ -1,6 +1,7 @@
 on:
   release:
     types: [created]
+  workflow_dispatch: # 添加手动触发支持
 
 jobs:
   upload-assets:
@@ -14,8 +15,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install OpenSSL (Linux)
-        run: sudo apt-get update && sudo apt-get install -y pkg-config libssl-dev
       - uses: taiki-e/upload-rust-binary-action@v1
         with:
           # (required) Comma-separated list of binary names (non-extension portion of filename) to build and upload.
