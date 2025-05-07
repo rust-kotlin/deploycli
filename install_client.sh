@@ -12,7 +12,7 @@ esac
 
 # prepare the download URL
 GITHUB_LATEST_VERSION=$(curl -L -s -H 'Accept: application/json' https://github.com/rust-kotlin/deploycli/releases/latest | sed -e 's/.*"tag_name":"\([^"]*\)".*/\1/')
-GITHUB_FILE="client-${ARCH}-unknown-linux-musl.tar.gz"
+GITHUB_FILE="client-${ARCH}-unknown-linux-gnu.tar.gz"
 GITHUB_URL="https://github.com/rust-kotlin/deploycli/releases/download/${GITHUB_LATEST_VERSION}/${GITHUB_FILE}"
 
 # install/update the local binary
