@@ -32,3 +32,6 @@ codegen-units = 1
 opt-level = "z"   # 优化体积
 panic = "abort"   # 减少 panic 处理代码
 strip = true      # 去除调试信息
+
+[target.x86_64-unknown-linux-gnu]
+rustflags = ["-C", "target-feature=+crt-static"]
