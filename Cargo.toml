@@ -11,14 +11,14 @@ tokio = { version = "1.44.2", features = ["macros", "rt-multi-thread"] }
 toml = "0.8.22"
 clia-tracing-config = "0.2.7"
 log = "0.4.27"
-zip = "2.6.1"
+zip = { version = "2.6.1", features = ["zstd"], default-features = false}
 thiserror = "2.0.12"
 serde_json = "1.0.140"
 reqwest = { version = "0.12.15", features = [
     "blocking",
     "json",
     "multipart",
-    "default-tls",
+    "rustls-tls",
 ], default-features = false }
 clap = { version = "4.5.37", features = ["derive"] }
 uuid = { version = "1.16.0", features = ["v4"] }
@@ -32,6 +32,3 @@ codegen-units = 1
 opt-level = "z"   # 优化体积
 panic = "abort"   # 减少 panic 处理代码
 strip = true      # 去除调试信息
-
-[target.x86_64-unknown-linux-gnu]
-rustflags = ["-C", "target-feature=+crt-static"]

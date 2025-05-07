@@ -17,7 +17,7 @@ pub fn create_zip(src_dir: &Path, zip_path: &Path) -> std::io::Result<()> {
     let mut zip = ZipWriter::new(file);
 
     let options = SimpleFileOptions::default()
-        .compression_method(zip::CompressionMethod::Xz)
+        .compression_method(zip::CompressionMethod::Zstd)
         .unix_permissions(0o755)
         .last_modified_time(zip::DateTime::default());
 

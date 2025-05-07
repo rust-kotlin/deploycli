@@ -23,8 +23,7 @@ impl<T: Serialize> From<T> for Success {
 
 impl Scribe for Success {
     fn render(self, res: &mut salvo::Response) {
-        if self.0 == 0 {
-            // 0代表什么都不做
+        if self.0 == json!(0) {
             return;
         }
         res.stuff(StatusCode::OK, Json(self.0));

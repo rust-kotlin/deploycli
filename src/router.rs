@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use log::error;
+use log::{debug, error};
 use salvo::prelude::*;
 use serde_json::json;
 use std::fs;
@@ -36,6 +36,7 @@ async fn download_task(req: &mut Request, res: &mut Response) -> AppResult {
     let md5 = md5::compute(tokio::fs::read(zip_path.clone()).await?);
     // 如果md5值相同，则不返回文件
     if task_md5 == format!("{:x}", md5) {
+        debug!("md5 match, not sending file");
         // 删除压缩包
         tokio::fs::remove_file(zip_path).await.unwrap_or_else(|e| {
             error!("Failed to delete zip file: {}", e);
@@ -44,16 +45,15 @@ async fn download_task(req: &mut Request, res: &mut Response) -> AppResult {
         res.stuff(StatusCode::NOT_MODIFIED, "");
         return Ok(0.into());
     }
+    // 如果md5值不同，则返回文件
+    debug!("md5 not match, sending file");
     // 提供下载
     res.send_file(&zip_path, req.headers()).await;
+    debug!("File sent: {:?}", zip_path);
     // 删除压缩包
     tokio::fs::remove_file(zip_path).await.unwrap_or_else(|e| {
         error!("Failed to delete zip file: {}", e);
     });
-    // 这个位置返回是没有意义的
-    // 因为上面已经返回了文件
-    // 约定一个值代表什么都不做
-    // 返回一个特殊定义的数
     Ok(0.into())
 }
 
