@@ -21,3 +21,4 @@ curl -L -o deploycli.tar.gz $GITHUB_URL
 tar xzvf deploycli.tar.gz deploycli
 install -Dm 755 deploycli -t "$DIR"
 rm deploycli deploycli.tar.gz
+cd ~
