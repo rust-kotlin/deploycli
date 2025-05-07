@@ -1,3 +1,6 @@
+permissions:
+  contents: write
+  
 on:
   release:
     types: [created]
@@ -8,9 +11,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - target: aarch64-unknown-linux-musl
-            os: ubuntu-24.04
-          - target: x86_64-unknown-linux-musl
+          - target: x86_64-unknown-linux-gnu
             os: ubuntu-24.04
     runs-on: ${{ matrix.os }}
     steps:
