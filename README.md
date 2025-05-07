@@ -1,5 +1,6 @@
 # DeployCli
 A tool to simplify the process of my new server init configuration.
+
 Since when I move to a new VPS, some init process of apps seems boring and the process to upload and modify the config files manually is painfull.
 ## Binary Release
 ### Sever
