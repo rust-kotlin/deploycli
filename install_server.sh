@@ -16,7 +16,8 @@ GITHUB_FILE="deploycli-${ARCH}-unknown-linux-musl.tar.gz"
 GITHUB_URL="https://github.com/rust-kotlin/deploycli/releases/download/${GITHUB_LATEST_VERSION}/${GITHUB_FILE}"
 
 # install/update the local binary
-curl -L -o /tmp/deploycli.tar.gz $GITHUB_URL
-tar xzvf /tmp/deploycli.tar.gz /tmp/deploycli
-install -Dm 755 /tmp/deploycli -t "$DIR"
-rm /tmp/deploycli /tmp/deploycli.tar.gz
+cd /tmp/
+curl -L -o deploycli.tar.gz $GITHUB_URL
+tar xzvf deploycli.tar.gz deploycli
+install -Dm 755 deploycli -t "$DIR"
+rm deploycli deploycli.tar.gz
