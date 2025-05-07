@@ -19,4 +19,4 @@ GITHUB_URL="https://github.com/rust-kotlin/deploycli/releases/download/${GITHUB_
 curl -L -o client.tar.gz $GITHUB_URL
 tar xzvf client.tar.gz client
 install -Dm 755 client -t "$DIR"
-rm st client.tar.gz
+rm client client.tar.gz
