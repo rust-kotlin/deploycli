@@ -19,4 +19,4 @@ GITHUB_URL="https://github.com/rust-kotlin/deploycli/releases/download/${GITHUB_
 curl -L -o deploycli.tar.gz $GITHUB_URL
 tar xzvf deploycli.tar.gz deploycli
 install -Dm 755 deploycli -t "$DIR"
-rm st deploycli.tar.gz
+rm deploycli deploycli.tar.gz
