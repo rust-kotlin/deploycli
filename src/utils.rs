@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use zip::ZipWriter;
 use zip::write::SimpleFileOptions;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Task {
     pub uuid: String,
     pub name: String,

@@ -54,8 +54,13 @@ enum Commands {
         /// Index of the task to delete
         index: usize,
     },
-    /// Update Database Index
+    /// Update remote database index
     Update,
+    /// CLean local cache
+    Clean {
+        /// Index of the task to clean
+        index: Option<usize>,
+    },
 }
 
 fn main() {
@@ -116,6 +121,12 @@ fn main() {
         Commands::Update => {
             if let Err(e) = update_database(&client, &config) {
                 eprintln!("Error: Failed to update database. Caused by: {e}");
+                process::exit(1);
+            }
+        }
+        Commands::Clean { index } => {
+            if let Err(e) = clean_cache(&client, &config, index) {
+                eprintln!("Error: Failed to clean cache. Caused by: {e}");
                 process::exit(1);
             }
         }
@@ -410,6 +421,8 @@ fn delete_task(client: &Client, config: &Config, index: usize) -> anyhow::Result
         .send()?;
     if resp.status().is_success() {
         println!("Task {} deleted successfully.", task.name);
+        // 删除缓存
+        clean_cache(client, config, Some(index))?;
     } else {
         eprintln!("Error: {:#?}", resp.json::<Value>());
     }
@@ -426,6 +439,41 @@ fn update_database(client: &Client, config: &Config) -> anyhow::Result<()> {
         println!("Database updated successfully.");
     } else {
         eprintln!("Error: {:#?}", resp.json::<Value>());
+    }
+    Ok(())
+}
+
+fn clean_cache(client: &Client, config: &Config, index: Option<usize>) -> anyhow::Result<()> {
+    let mut tasks: Vec<Task> = client
+        .get(format!("{}/tasks", config.server))
+        .header("Authorization", &config.password)
+        .send()?
+        .json()?;
+    if index.is_some() && index.unwrap() >= tasks.len() {
+        return Err(anyhow!("Task index out of range"));
+    }
+    if index.is_some() {
+        // tasks里只保留index的任务
+        let index = index.unwrap();
+        tasks = vec![tasks[index].clone()];
+    }
+    // 删除所有缓存
+    for task in tasks {
+        let cache_path = format!("/tmp/{}-{}.zip", task.name, task.uuid);
+        let cache_path = Path::new(&cache_path);
+        if cache_path.exists() {
+            fs::remove_file(cache_path)?;
+            println!("Cache for task {} deleted successfully.", task.name);
+        } else {
+            println!("No cache found for task {}.", task.name);
+        }
+        let cache_zip = cache_path.with_extension("zip");
+        if cache_zip.exists() {
+            fs::remove_file(&cache_zip)?;
+            println!("Cache zip for task {} deleted successfully.", task.name);
+        } else {
+            println!("No cache zip found for task {}.", task.name);
+        }
     }
     Ok(())
 }
