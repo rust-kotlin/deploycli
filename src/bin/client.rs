@@ -1,15 +1,14 @@
 use anyhow::anyhow;
 use clap::{Parser, Subcommand};
 use colored::Colorize;
-use deploycli::Task;
+use deploycli::{run_script, Task};
 use deploycli::{create_zip, unpack_zip};
 use reqwest::blocking::{Client, multipart};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::io::Write;
 use std::path::Path;
 use std::process;
-use std::{fs, io};
+use std::fs;
 
 const CONFIG_PATH: &str = "/etc/deploycli/config.toml";
 
@@ -287,50 +286,8 @@ fn get_task_by_index(client: &Client, config: &Config, index: usize) -> anyhow::
                     if unpack_res.is_ok() {
                         #[cfg(target_family = "unix")]
                         {
-                            let mut child = std::process::Command::new("sh")
-                                .arg(format!("{}/run.sh", dest_dir))
-                                .stdin(std::process::Stdio::piped())
-                                .stdout(std::process::Stdio::inherit()) // 直接继承父进程的 stdout
-                                .stderr(std::process::Stdio::inherit()) // 直接继承父进程的 stderr
-                                .spawn()
-                                .expect("Failed to execute script");
-                            // 获取脚本的 stdin
-                            if let Some(mut stdin) = child.stdin.take() {
-                                println!("Enter input for the script (type 'exit' to quit):");
-
-                                // 创建一个循环，持续监听用户输入
-                                let _ = std::thread::spawn(move || {
-                                    let mut input = String::new();
-                                    let stdin_handle = io::stdin();
-
-                                    loop {
-                                        input.clear();
-                                        print!("{}", "> ".green().bold()); // 提示符
-                                        io::stdout().flush().unwrap(); // 刷新输出缓冲区
-                                        stdin_handle
-                                            .read_line(&mut input)
-                                            .expect("Failed to read input");
-
-                                        let trimmed = input.trim();
-                                        if trimmed.eq_ignore_ascii_case("exit") {
-                                            break; // 用户输入 "exit" 时退出循环
-                                        }
-
-                                        // 将用户输入写入脚本的 stdin
-                                        if let Err(e) = stdin.write_all(input.as_bytes()) {
-                                            eprintln!("Failed to write to stdin: {}", e);
-                                            break;
-                                        }
-                                    }
-                                });
-                            }
-                            // 等待脚本执行完成
-                            let status = child.wait().expect("Failed to wait on child");
-                            if status.success() {
-                                println!("Script executed successfully.");
-                            } else {
-                                eprintln!("Script execution failed with status: {:?}", status);
-                            }
+                            let script_path = Path::new(&dest_dir).join("run.sh");
+                            run_script(&script_path);
                         }
                     } else {
                         eprintln!(
@@ -459,10 +416,10 @@ fn clean_cache(client: &Client, config: &Config, index: Option<usize>) -> anyhow
     }
     // 删除所有缓存
     for task in tasks {
-        let cache_path = format!("/tmp/{}-{}.zip", task.name, task.uuid);
+        let cache_path = format!("/tmp/{}-{}", task.name, task.uuid);
         let cache_path = Path::new(&cache_path);
         if cache_path.exists() {
-            fs::remove_file(cache_path)?;
+            fs::remove_dir_all(cache_path)?;
             println!("Cache for task {} deleted successfully.", task.name);
         } else {
             println!("No cache found for task {}.", task.name);

@@ -1,7 +1,8 @@
-use std::fs;
+use colored::Colorize;
+use serde::{Deserialize, Serialize};
+use std::{fs, io};
 use std::io::{Read, Write};
 use std::path::Path;
-use serde::{Deserialize, Serialize};
 use zip::ZipWriter;
 use zip::write::SimpleFileOptions;
 
@@ -9,7 +10,7 @@ use zip::write::SimpleFileOptions;
 pub struct Task {
     pub uuid: String,
     pub name: String,
-    pub description: String
+    pub description: String,
 }
 
 pub fn create_zip(src_dir: &Path, zip_path: &Path) -> std::io::Result<()> {
@@ -61,6 +62,69 @@ pub fn unpack_zip(src_path: &Path, dest_dir: &Path) -> std::io::Result<()> {
     Ok(())
 }
 
+pub fn run_script(script_path: &Path) {
+    // 在运行之前先完整显示脚本内容，等待用户输入y同意执行
+    println!("{}", "Script content:".green().bold());
+    let mut script_content = String::new();
+    let mut file = fs::File::open(script_path).expect("Failed to open script file");
+    file.read_to_string(&mut script_content)
+        .expect("Failed to read script file");
+    println!("{}", script_content);
+    // 等待用户输入y再执行，否则退出
+    println!("{}", "Do you want to execute this script? (y/n)".green().bold());
+    let mut input = String::new();
+    io::stdin()
+        .read_line(&mut input)
+        .expect("Failed to read input");
+    let trimmed = input.trim();
+    if !trimmed.eq_ignore_ascii_case("y") {
+        println!("{}", "Script execution cancelled.".red().bold());
+        return;
+    }
+    #[cfg(target_family = "unix")]
+    {
+        let mut child = std::process::Command::new("sh")
+            .arg(script_path)
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::inherit()) // 直接继承父进程的 stdout
+            .stderr(std::process::Stdio::inherit()) // 直接继承父进程的 stderr
+            .spawn()
+            .expect("Failed to execute script");
+        // 获取脚本的 stdin
+        if let Some(mut stdin) = child.stdin.take() {
+            println!("{}", "Wait for input (type ':q' to quit):".red().bold());
+            // 创建一个循环，持续监听用户输入
+            let _ = std::thread::spawn(move || {
+                let mut input = String::new();
+                let stdin_handle = io::stdin();
+                loop {
+                    input.clear();
+                    print!("{}", "> ".green().bold()); // 提示符
+                    io::stdout().flush().unwrap(); // 刷新输出缓冲区
+                    stdin_handle
+                        .read_line(&mut input)
+                        .expect("Failed to read input");
+                    let trimmed = input.trim();
+                    if trimmed.eq_ignore_ascii_case(":q") {
+                        break; // 用户输入 "exit" 时退出循环
+                    }
+                    // 将用户输入写入脚本的 stdin
+                    if let Err(e) = stdin.write_all(input.as_bytes()) {
+                        eprintln!("Failed to write to stdin: {}", e);
+                        break;
+                    }
+                }
+            });
+        }
+        // 等待脚本执行完成
+        let status = child.wait().expect("Failed to wait on child");
+        if status.success() {
+            println!("{}", "Script executed successfully.".green().bold());
+        } else {
+            eprintln!("{} {:?}", "Script execution failed with status".red().bold(), status);
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
