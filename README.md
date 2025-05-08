@@ -42,6 +42,6 @@ Options:
 ```
 
 ## TODOS
-- [ ] Add Run.sh preview before run. (In fact every user must deploy his own server and ensure the safety of package by himself.)
+- [x] Add Run.sh preview before run. (In fact every user must deploy his own server and ensure the safety of package by himself.)
 - [ ] Encrypt the password
 - [ ] More to do...
